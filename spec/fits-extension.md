@@ -573,37 +573,37 @@ The following JSON Schema can be used to validate the FITS extension fields:
   "description": "Schema for validating JNRRD FITS extension fields",
   "type": "object",
   "properties": {
-    "fits:simple": {
+    "simple": {
       "type": "boolean",
-      "description": "True if file conforms to FITS standard"
+      "description": "True if file conforms to FITS standard (stored as 'fits:simple' in JNRRD files)"
     },
-    "fits:bitpix": {
+    "bitpix": {
       "type": "integer",
-      "description": "Bits per pixel",
+      "description": "Bits per pixel (stored as 'fits:bitpix' in JNRRD files)",
       "enum": [8, 16, 32, 64, -32, -64]
     },
-    "fits:naxis": {
+    "naxis": {
       "type": "integer",
-      "description": "Number of axes",
+      "description": "Number of axes (stored as 'fits:naxis' in JNRRD files)",
       "minimum": 0
     },
-    "fits:extend": {
+    "extend": {
       "type": "boolean",
-      "description": "True if file may contain extensions"
+      "description": "True if file may contain extensions (stored as 'fits:extend' in JNRRD files)"
     },
-    "fits:header": {
+    "header": {
       "type": "object",
-      "description": "Primary header keywords",
+      "description": "Primary header keywords (stored as 'fits:header' in JNRRD files)",
       "additionalProperties": true
     },
-    "fits:wcs": {
+    "wcs": {
       "type": "object",
-      "description": "World Coordinate System parameters",
+      "description": "World Coordinate System parameters (stored as 'fits:wcs' in JNRRD files)",
       "additionalProperties": true
     },
-    "fits:extensions": {
+    "extensions": {
       "type": "array",
-      "description": "Extension HDUs",
+      "description": "Extension HDUs (stored as 'fits:extensions' in JNRRD files)",
       "items": {
         "type": "object",
         "properties": {
@@ -645,14 +645,14 @@ The following JSON Schema can be used to validate the FITS extension fields:
         "required": ["xtension", "bitpix", "naxis"]
       }
     },
-    "fits:groups": {
+    "groups": {
       "type": "object",
-      "description": "Hierarchical keywords",
+      "description": "Hierarchical keywords (stored as 'fits:groups' in JNRRD files)",
       "additionalProperties": true
     },
-    "fits:table_data": {
+    "table_data": {
       "type": "object",
-      "description": "Binary table structure",
+      "description": "Binary table structure (stored as 'fits:table_data' in JNRRD files)",
       "properties": {
         "structure": {
           "type": "array",
@@ -684,39 +684,39 @@ The following JSON Schema can be used to validate the FITS extension fields:
       },
       "required": ["structure", "rows"]
     },
-    "fits:comments": {
+    "comments": {
       "type": "array",
-      "description": "Comment records",
+      "description": "Comment records (stored as 'fits:comments' in JNRRD files)",
       "items": {
         "type": "string"
       }
     },
-    "fits:history": {
+    "history": {
       "type": "array",
-      "description": "History records",
+      "description": "History records (stored as 'fits:history' in JNRRD files)",
       "items": {
         "type": "string"
       }
     },
-    "fits:data_storage": {
+    "data_storage": {
       "type": "string",
-      "description": "How multi-HDU data is stored",
+      "description": "How multi-HDU data is stored (stored as 'fits:data_storage' in JNRRD files)",
       "enum": ["embedded", "detached"]
     },
-    "fits:primary_data_file": {
+    "primary_data_file": {
       "type": "string",
-      "description": "File containing primary HDU data"
+      "description": "File containing primary HDU data (stored as 'fits:primary_data_file' in JNRRD files)"
     },
-    "fits:extension_data_files": {
+    "extension_data_files": {
       "type": "array",
-      "description": "Files containing extension HDU data",
+      "description": "Files containing extension HDU data (stored as 'fits:extension_data_files' in JNRRD files)",
       "items": {
         "type": "string"
       }
     },
-    "fits:space_mapping": {
+    "space_mapping": {
       "type": "object",
-      "description": "Mapping between JNRRD and FITS spaces",
+      "description": "Mapping between JNRRD and FITS spaces (stored as 'fits:space_mapping' in JNRRD files)",
       "properties": {
         "jnrrd_space": {
           "type": "string",

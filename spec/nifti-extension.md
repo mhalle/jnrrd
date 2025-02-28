@@ -444,47 +444,47 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
   "description": "Schema for validating JNRRD NIfTI extension fields",
   "type": "object",
   "properties": {
-    "nifti:version": {
+    "version": {
       "type": "integer",
-      "description": "NIfTI version (1 or 2)",
+      "description": "NIfTI version (1 or 2) (stored as 'nifti:version' in JNRRD files)",
       "enum": [1, 2]
     },
-    "nifti:intent_code": {
+    "intent_code": {
       "type": "integer",
-      "description": "Code for data intent"
+      "description": "Code for data intent (stored as 'nifti:intent_code' in JNRRD files)"
     },
-    "nifti:intent_name": {
+    "intent_name": {
       "type": "string",
-      "description": "Name for data intent",
+      "description": "Name for data intent (stored as 'nifti:intent_name' in JNRRD files)",
       "maxLength": 16
     },
-    "nifti:intent_p1": {
+    "intent_p1": {
       "type": "number",
-      "description": "First intent parameter"
+      "description": "First intent parameter (stored as 'nifti:intent_p1' in JNRRD files)"
     },
-    "nifti:intent_p2": {
+    "intent_p2": {
       "type": "number",
-      "description": "Second intent parameter"
+      "description": "Second intent parameter (stored as 'nifti:intent_p2' in JNRRD files)"
     },
-    "nifti:intent_p3": {
+    "intent_p3": {
       "type": "number",
-      "description": "Third intent parameter"
+      "description": "Third intent parameter (stored as 'nifti:intent_p3' in JNRRD files)"
     },
-    "nifti:qform_code": {
+    "qform_code": {
       "type": "integer",
-      "description": "Code for quaternion transform",
+      "description": "Code for quaternion transform (stored as 'nifti:qform_code' in JNRRD files)",
       "minimum": 0,
       "maximum": 4
     },
-    "nifti:sform_code": {
+    "sform_code": {
       "type": "integer",
-      "description": "Code for affine transform",
+      "description": "Code for affine transform (stored as 'nifti:sform_code' in JNRRD files)",
       "minimum": 0,
       "maximum": 4
     },
-    "nifti:qform_parameters": {
+    "qform_parameters": {
       "type": "object",
-      "description": "Quaternion transform parameters",
+      "description": "Quaternion transform parameters (stored as 'nifti:qform_parameters' in JNRRD files)",
       "properties": {
         "quaternion": {
           "type": "array",
@@ -507,9 +507,9 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
       },
       "required": ["quaternion", "offset"]
     },
-    "nifti:sform_matrix": {
+    "sform_matrix": {
       "type": "array",
-      "description": "4×4 affine transformation matrix",
+      "description": "4×4 affine transformation matrix (stored as 'nifti:sform_matrix' in JNRRD files)",
       "items": {
         "type": "array",
         "items": {
@@ -521,9 +521,9 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
       "minItems": 4,
       "maxItems": 4
     },
-    "nifti:units": {
+    "units": {
       "type": "object",
-      "description": "Units for spatial and temporal dimensions",
+      "description": "Units for spatial and temporal dimensions (stored as 'nifti:units' in JNRRD files)",
       "properties": {
         "xyz": {
           "type": "integer",
@@ -537,9 +537,9 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
         }
       }
     },
-    "nifti:scaling": {
+    "scaling": {
       "type": "object",
-      "description": "Scaling factors for data values",
+      "description": "Scaling factors for data values (stored as 'nifti:scaling' in JNRRD files)",
       "properties": {
         "slope": {
           "type": "number",
@@ -552,9 +552,9 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
       },
       "required": ["slope", "intercept"]
     },
-    "nifti:slice": {
+    "slice": {
       "type": "object",
-      "description": "Slice timing information",
+      "description": "Slice timing information (stored as 'nifti:slice' in JNRRD files)",
       "properties": {
         "code": {
           "type": "integer",
@@ -577,9 +577,9 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
       },
       "required": ["code"]
     },
-    "nifti:calibration": {
+    "calibration": {
       "type": "object",
-      "description": "Display range calibration",
+      "description": "Display range calibration (stored as 'nifti:calibration' in JNRRD files)",
       "properties": {
         "min": {
           "type": "number",
@@ -592,40 +592,40 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
       },
       "required": ["min", "max"]
     },
-    "nifti:description": {
+    "description": {
       "type": "string",
-      "description": "Text description of the data",
+      "description": "Text description of the data (stored as 'nifti:description' in JNRRD files)",
       "maxLength": 80
     },
-    "nifti:aux_file": {
+    "aux_file": {
       "type": "string",
-      "description": "Auxiliary filename",
+      "description": "Auxiliary filename (stored as 'nifti:aux_file' in JNRRD files)",
       "maxLength": 24
     },
-    "nifti:database_name": {
+    "database_name": {
       "type": "string",
-      "description": "Name of database containing this image"
+      "description": "Name of database containing this image (stored as 'nifti:database_name' in JNRRD files)"
     },
-    "nifti:generated_by": {
+    "generated_by": {
       "type": "string",
-      "description": "Program that generated this file"
+      "description": "Program that generated this file (stored as 'nifti:generated_by' in JNRRD files)"
     },
-    "nifti:session_error": {
+    "session_error": {
       "type": "number",
-      "description": "Estimate of session error"
+      "description": "Estimate of session error (stored as 'nifti:session_error' in JNRRD files)"
     },
-    "nifti:regular": {
+    "regular": {
       "type": "integer",
-      "description": "1 if all slices have same time pattern",
+      "description": "1 if all slices have same time pattern (stored as 'nifti:regular' in JNRRD files)",
       "enum": [0, 1]
     },
-    "nifti:dim_info": {
+    "dim_info": {
       "type": "integer",
-      "description": "Encoding of the frequency, phase, and slice dimensions"
+      "description": "Encoding of the frequency, phase, and slice dimensions (stored as 'nifti:dim_info' in JNRRD files)"
     },
-    "nifti:extension_sequence": {
+    "extension_sequence": {
       "type": "array",
-      "description": "NIfTI extensions",
+      "description": "NIfTI extensions (stored as 'nifti:extension_sequence' in JNRRD files)",
       "items": {
         "type": "object",
         "properties": {
@@ -641,9 +641,9 @@ The following JSON Schema can be used to validate the NIfTI extension fields:
         "required": ["code", "content"]
       }
     },
-    "nifti:space_mapping": {
+    "space_mapping": {
       "type": "object",
-      "description": "Mapping between JNRRD and NIfTI spaces",
+      "description": "Mapping between JNRRD and NIfTI spaces (stored as 'nifti:space_mapping' in JNRRD files)",
       "properties": {
         "jnrrd_space": {
           "type": "string",

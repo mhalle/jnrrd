@@ -469,63 +469,63 @@ The following JSON Schema can be used to validate the tiling extension fields:
   "title": "JNRRD Tiling Extension Schema",
   "description": "Schema for validating JNRRD tiling extension fields",
   "type": "object",
-  "required": ["tile:enabled", "tile:dimensions", "tile:sizes", "tile:storage"],
+  "required": ["enabled", "dimensions", "sizes", "storage"],
   "properties": {
-    "tile:enabled": {
+    "enabled": {
       "type": "boolean",
-      "description": "Enable tiling support",
+      "description": "Enable tiling support (stored as 'tile:enabled' in JNRRD files)",
       "enum": [true]
     },
-    "tile:dimensions": {
+    "dimensions": {
       "type": "array",
-      "description": "Dimensions to tile",
+      "description": "Dimensions to tile (stored as 'tile:dimensions' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 0
       },
       "minItems": 1
     },
-    "tile:sizes": {
+    "sizes": {
       "type": "array",
-      "description": "Size of each tile in each dimension",
+      "description": "Size of each tile in each dimension (stored as 'tile:sizes' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 1
       }
     },
-    "tile:storage": {
+    "storage": {
       "type": "string",
-      "description": "Storage model for tiles",
+      "description": "Storage model for tiles (stored as 'tile:storage' in JNRRD files)",
       "enum": ["internal", "external"]
     },
-    "tile:format": {
+    "format": {
       "type": "string",
-      "description": "Format of internal tile storage",
+      "description": "Format of internal tile storage (stored as 'tile:format' in JNRRD files)",
       "enum": ["contiguous", "chunked"]
     },
-    "tile:offset_table": {
+    "offset_table": {
       "type": "array",
-      "description": "Byte offsets for each tile",
+      "description": "Byte offsets for each tile (stored as 'tile:offset_table' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 0
       }
     },
-    "tile:size_table": {
+    "size_table": {
       "type": "array",
-      "description": "Size in bytes of each tile",
+      "description": "Size in bytes of each tile (stored as 'tile:size_table' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 1
       }
     },
-    "tile:pattern": {
+    "pattern": {
       "type": "string",
-      "description": "Pattern for external tile filenames"
+      "description": "Pattern for external tile filenames (stored as 'tile:pattern' in JNRRD files)"
     },
-    "tile:files": {
+    "files": {
       "type": "array",
-      "description": "Explicit list of files for each tile",
+      "description": "Explicit list of files for each tile (stored as 'tile:files' in JNRRD files)",
       "items": {
         "type": "object",
         "required": ["indices", "file"],
@@ -543,71 +543,71 @@ The following JSON Schema can be used to validate the tiling extension fields:
         }
       }
     },
-    "tile:base_dir": {
+    "base_dir": {
       "type": "string",
-      "description": "Base directory for external tile files"
+      "description": "Base directory for external tile files (stored as 'tile:base_dir' in JNRRD files)"
     },
-    "tile:edge_handling": {
+    "edge_handling": {
       "type": "string",
-      "description": "How to handle edges when dataset size isn't a multiple of tile size",
+      "description": "How to handle edges when dataset size isn't a multiple of tile size (stored as 'tile:edge_handling' in JNRRD files)",
       "enum": ["pad", "variable"],
       "default": "pad"
     },
-    "tile:padding_value": {
+    "padding_value": {
       "type": "number",
-      "description": "Value to use for padding",
+      "description": "Value to use for padding (stored as 'tile:padding_value' in JNRRD files)",
       "default": 0
     },
-    "tile:overlap": {
+    "overlap": {
       "type": "array",
-      "description": "Overlap between adjacent tiles in each dimension",
+      "description": "Overlap between adjacent tiles in each dimension (stored as 'tile:overlap' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 0
       }
     },
-    "tile:compression": {
+    "compression": {
       "type": "string",
-      "description": "Compression method for tiles",
+      "description": "Compression method for tiles (stored as 'tile:compression' in JNRRD files)",
       "enum": ["raw", "gzip", "bzip2", "zstd", "lz4"]
     },
-    "tile:compression_levels": {
+    "compression_levels": {
       "type": "array",
-      "description": "Compression level for each tile",
+      "description": "Compression level for each tile (stored as 'tile:compression_levels' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 0
       }
     },
-    "tile:levels": {
+    "levels": {
       "type": "integer",
-      "description": "Number of resolution levels",
+      "description": "Number of resolution levels (stored as 'tile:levels' in JNRRD files)",
       "minimum": 1
     },
-    "tile:level_scales": {
+    "level_scales": {
       "type": "array",
-      "description": "Scale factor for each resolution level",
+      "description": "Scale factor for each resolution level (stored as 'tile:level_scales' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 1
       }
     },
-    "tile:level_offsets": {
+    "level_offsets": {
       "type": "array",
-      "description": "Byte offset for the start of each resolution level",
+      "description": "Byte offset for the start of each resolution level (stored as 'tile:level_offsets' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 0
       }
     },
-    "tile:downsample_method": {
+    "downsample_method": {
       "type": "string",
-      "description": "Method used for generating lower resolution levels",
+      "description": "Method used for generating lower resolution levels (stored as 'tile:downsample_method' in JNRRD files)",
       "enum": ["average", "gaussian", "lanczos", "max", "min", "mode"]
     },
-    "tile:level_tile_sizes": {
+    "level_tile_sizes": {
       "type": "array",
-      "description": "Different tile sizes for each resolution level",
+      "description": "Different tile sizes for each resolution level (stored as 'tile:level_tile_sizes' in JNRRD files)",
       "items": {
         "type": "array",
         "items": {
@@ -616,65 +616,65 @@ The following JSON Schema can be used to validate the tiling extension fields:
         }
       }
     },
-    "tile:levels_stored": {
+    "levels_stored": {
       "type": "array",
-      "description": "Indices of resolution levels that are stored in the file",
+      "description": "Indices of resolution levels that are stored in the file (stored as 'tile:levels_stored' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 0
       }
     },
-    "tile:levels_virtual": {
+    "levels_virtual": {
       "type": "array",
-      "description": "Indices of resolution levels that are generated on demand",
+      "description": "Indices of resolution levels that are generated on demand (stored as 'tile:levels_virtual' in JNRRD files)",
       "items": {
         "type": "integer",
         "minimum": 0
       }
     },
-    "tile:level_quality": {
+    "level_quality": {
       "type": "array",
-      "description": "Quality metrics for each resolution level",
+      "description": "Quality metrics for each resolution level (stored as 'tile:level_quality' in JNRRD files)",
       "items": {
         "type": "object"
       }
     },
-    "tile:metadata": {
+    "metadata": {
       "type": "array",
-      "description": "Metadata for each tile",
+      "description": "Metadata for each tile (stored as 'tile:metadata' in JNRRD files)",
       "items": {
         "type": "object"
       }
     }
   },
   "dependencies": {
-    "tile:storage": {
+    "storage": {
       "oneOf": [
         {
           "properties": {
-            "tile:storage": { "enum": ["internal"] }
+            "storage": { "enum": ["internal"] }
           },
-          "required": ["tile:offset_table"]
+          "required": ["offset_table"]
         },
         {
           "properties": {
-            "tile:storage": { "enum": ["external"] }
+            "storage": { "enum": ["external"] }
           },
           "oneOf": [
-            { "required": ["tile:pattern"] },
-            { "required": ["tile:files"] }
+            { "required": ["pattern"] },
+            { "required": ["files"] }
           ]
         }
       ]
     },
-    "tile:levels": {
-      "required": ["tile:level_scales"]
+    "levels": {
+      "required": ["level_scales"]
     },
-    "tile:levels_stored": {
-      "required": ["tile:levels_virtual"]
+    "levels_stored": {
+      "required": ["levels_virtual"]
     },
-    "tile:level_tile_sizes": {
-      "required": ["tile:levels"]
+    "level_tile_sizes": {
+      "required": ["levels"]
     }
   }
 }

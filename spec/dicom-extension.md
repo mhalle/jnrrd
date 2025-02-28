@@ -460,8 +460,9 @@ The following JSON Schema can be used to validate the DICOM extension fields:
   "description": "Schema for validating JNRRD DICOM extension fields",
   "type": "object",
   "properties": {
-    "dicom:patient": {
+    "patient": {
       "type": "object",
+      "description": "Patient information (stored as 'dicom:patient' in JNRRD files)",
       "properties": {
         "id": { "type": "string" },
         "age": { 
@@ -477,8 +478,9 @@ The following JSON Schema can be used to validate the DICOM extension fields:
         "position": { "type": "string" }
       }
     },
-    "dicom:study": {
+    "study": {
       "type": "object",
+      "description": "Study information (stored as 'dicom:study' in JNRRD files)",
       "properties": {
         "instance_uid": { "type": "string" },
         "date": { 
@@ -495,8 +497,9 @@ The following JSON Schema can be used to validate the DICOM extension fields:
         "referring_physician": { "type": "string" }
       }
     },
-    "dicom:series": {
+    "series": {
       "type": "object",
+      "description": "Series information (stored as 'dicom:series' in JNRRD files)",
       "properties": {
         "instance_uid": { "type": "string" },
         "number": { "type": "integer" },
@@ -514,8 +517,9 @@ The following JSON Schema can be used to validate the DICOM extension fields:
         }
       }
     },
-    "dicom:equipment": {
+    "equipment": {
       "type": "object",
+      "description": "Equipment information (stored as 'dicom:equipment' in JNRRD files)",
       "properties": {
         "manufacturer": { "type": "string" },
         "institution_name": { "type": "string" },
@@ -525,8 +529,9 @@ The following JSON Schema can be used to validate the DICOM extension fields:
         "software_versions": { "type": "string" }
       }
     },
-    "dicom:image": {
+    "image": {
       "type": "object",
+      "description": "Image information (stored as 'dicom:image' in JNRRD files)",
       "properties": {
         "type": { 
           "type": "array",
@@ -567,8 +572,9 @@ The following JSON Schema can be used to validate the DICOM extension fields:
         "photometric_interpretation": { "type": "string" }
       }
     },
-    "dicom:mr": {
+    "mr": {
       "type": "object",
+      "description": "MR-specific parameters (stored as 'dicom:mr' in JNRRD files)",
       "properties": {
         "scanning_sequence": { "type": "string" },
         "sequence_variant": { "type": "string" },
@@ -597,8 +603,9 @@ The following JSON Schema can be used to validate the DICOM extension fields:
         "pixel_bandwidth": { "type": "number" }
       }
     },
-    "dicom:ct": {
+    "ct": {
       "type": "object",
+      "description": "CT-specific parameters (stored as 'dicom:ct' in JNRRD files)",
       "properties": {
         "kvp": { "type": "number" },
         "tube_current": { "type": "number" },
@@ -625,15 +632,17 @@ The following JSON Schema can be used to validate the DICOM extension fields:
         "distance_source_to_patient": { "type": "number" }
       }
     },
-    "dicom:tag": {
+    "tag": {
       "type": "object",
+      "description": "Generic DICOM tags (stored as 'dicom:tag' in JNRRD files)",
       "patternProperties": {
         "^[0-9A-Fa-f]{8}$": {}
       },
       "additionalProperties": false
     },
-    "dicom:private_tag": {
+    "private_tag": {
       "type": "object",
+      "description": "Private DICOM tags (stored as 'dicom:private_tag' in JNRRD files)",
       "patternProperties": {
         "^[0-9A-Fa-f]{8}$": {
           "type": "object",
