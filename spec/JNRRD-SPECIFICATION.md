@@ -242,7 +242,20 @@ The two hierarchical representations can be mixed within the same set of fields,
 
 When both approaches are used, the more specific path always takes precedence over the less specific one.
 
-### 4.8 Writer Responsibility
+### 4.8 Parser Implementation
+
+A reference implementation for parsing hierarchical extension fields in JNRRD headers is available in [jnrrd_header_parser.md](./jnrrd_header_parser.md). This implementation:
+
+1. **Handles dot notation** for object properties (e.g., `metadata:creator.name`)
+2. **Handles bracket notation** for array indices (e.g., `nifti:quaternion[0]`)
+3. **Creates nested structures** automatically based on path components
+4. **Handles field overrides** where more specific paths take precedence
+5. **Separates extensions** by namespace prefixes
+6. **Merges objects** with complementary paths
+
+The parser provides a consistent way to convert from the flat, line-based JNRRD header format to a fully hierarchical data structure that can be used by applications.
+
+### 4.9 Writer Responsibility
 
 The writer of a JNRRD file is responsible for:
 
