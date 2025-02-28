@@ -28,9 +28,11 @@ def test_read_write_roundtrip():
             'content': 'Test Data',
             'space': 'right-anterior-superior',
             'spacings': [1.0, 2.0, 3.0],
-            'jnrrd_ext_meta': {
-                'name': 'Test Dataset',
-                'description': 'A test dataset for unit tests',
+            'extensions_data': {
+                'meta': {
+                    'name': 'Test Dataset',
+                    'description': 'A test dataset for unit tests',
+                }
             }
         }
         
@@ -47,8 +49,9 @@ def test_read_write_roundtrip():
         assert read_header_result['content'] == 'Test Data'
         assert read_header_result['space'] == 'right-anterior-superior'
         assert read_header_result['spacings'] == [1.0, 2.0, 3.0]
-        assert 'jnrrd_ext_meta' in read_header_result
-        assert read_header_result['jnrrd_ext_meta']['name'] == 'Test Dataset'
+        assert 'extensions_data' in read_header_result
+        assert 'meta' in read_header_result['extensions_data']
+        assert read_header_result['extensions_data']['meta']['name'] == 'Test Dataset'
         
         # Check that the data is preserved
         np.testing.assert_array_equal(data, read_result_data)
@@ -63,16 +66,18 @@ def test_extension_flattening():
         
         # Create header with nested extension data
         header = {
-            'jnrrd_ext_test': {
-                'level1': {
-                    'level2': {
-                        'level3': 'deeply_nested_value'
-                    },
-                    'array': [1, 2, 3, 4],
-                    'mixed': [
-                        {'name': 'item1', 'value': 10},
-                        {'name': 'item2', 'value': 20}
-                    ]
+            'extensions_data': {
+                'test': {
+                    'level1': {
+                        'level2': {
+                            'level3': 'deeply_nested_value'
+                        },
+                        'array': [1, 2, 3, 4],
+                        'mixed': [
+                            {'name': 'item1', 'value': 10},
+                            {'name': 'item2', 'value': 20}
+                        ]
+                    }
                 }
             }
         }
@@ -85,11 +90,12 @@ def test_extension_flattening():
         read_result_header, _ = read(temp_file)
         
         # Check that the nested extension data is preserved
-        assert 'jnrrd_ext_test' in read_result_header
-        assert read_result_header['jnrrd_ext_test']['level1']['level2']['level3'] == 'deeply_nested_value'
-        assert read_result_header['jnrrd_ext_test']['level1']['array'] == [1, 2, 3, 4]
-        assert read_result_header['jnrrd_ext_test']['level1']['mixed'][0]['name'] == 'item1'
-        assert read_result_header['jnrrd_ext_test']['level1']['mixed'][1]['value'] == 20
+        assert 'extensions_data' in read_result_header
+        assert 'test' in read_result_header['extensions_data']
+        assert read_result_header['extensions_data']['test']['level1']['level2']['level3'] == 'deeply_nested_value'
+        assert read_result_header['extensions_data']['test']['level1']['array'] == [1, 2, 3, 4]
+        assert read_result_header['extensions_data']['test']['level1']['mixed'][0]['name'] == 'item1'
+        assert read_result_header['extensions_data']['test']['level1']['mixed'][1]['value'] == 20
 
 
 def test_detached_data():

@@ -55,13 +55,17 @@ def _process_extension_fields(header: Dict[str, Any]) -> Dict[str, Any]:
     # Rebuild the header
     result = regular_fields.copy()
     
-    # Add extension declarations
-    if extensions:
+    # Add extension declarations if present in the original header
+    if extensions_decl:
         result['extensions'] = extensions_decl
-        
-        # Store the processed extensions under a special key format
-        for prefix, ext_data in extensions.items():
-            result[f'jnrrd_ext_{prefix}'] = ext_data
+    # Otherwise create it if we found extensions
+    elif extensions:
+        result['extensions'] = {prefix: f"https://jnrrd.org/extensions/{prefix}/v1.0.0" 
+                               for prefix in extensions.keys()}
+    
+    # Store the processed extensions in a dedicated 'extensions' dictionary for direct access
+    if extensions:
+        result['extensions_data'] = extensions
     
     return result
 

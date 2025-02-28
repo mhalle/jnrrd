@@ -54,27 +54,29 @@ def example_write():
         'labels': ['x', 'y', 'z'],
         'kinds': ['space', 'space', 'space'],
         
-        # Extension data
-        'jnrrd_ext_meta': {
-            'name': 'Sample JNRRD Dataset',
-            'description': 'A sample 3D dataset created with the JNRRD Python library',
-            'creator': {
-                'name': 'JNRRD Python Library',
-                'url': 'https://github.com/example/jnrrd'
+        # Extension data stored in extensions_data dictionary
+        'extensions_data': {
+            'meta': {
+                'name': 'Sample JNRRD Dataset',
+                'description': 'A sample 3D dataset created with the JNRRD Python library',
+                'creator': {
+                    'name': 'JNRRD Python Library',
+                    'url': 'https://github.com/example/jnrrd'
+                },
+                'dateCreated': time.strftime('%Y-%m-%d'),
+                'keywords': ['sample', 'test', 'jnrrd', 'python']
             },
-            'dateCreated': time.strftime('%Y-%m-%d'),
-            'keywords': ['sample', 'test', 'jnrrd', 'python']
-        },
-        
-        'jnrrd_ext_custom': {
-            'parameters': {
-                'frequency_x': 2.0,
-                'frequency_y': 4.0,
-                'gaussian_sigma': 0.5
-            },
-            'versions': {
-                'library': '0.1.0',
-                'numpy': np.__version__
+            
+            'custom': {
+                'parameters': {
+                    'frequency_x': 2.0,
+                    'frequency_y': 4.0,
+                    'gaussian_sigma': 0.5
+                },
+                'versions': {
+                    'library': '0.1.0',
+                    'numpy': np.__version__
+                }
             }
         }
     }
@@ -122,14 +124,15 @@ def example_read(encodings):
         print(f"  Dimensions: {header.get('dimension')}")
         print(f"  Sizes: {header.get('sizes')}")
         
-        # Check for extensions
-        for key in header:
-            if key.startswith('jnrrd_ext_'):
-                ext_name = key[10:]  # Remove 'jnrrd_ext_'
-                print(f"  Extension: {ext_name}")
-                if ext_name == 'meta':
-                    print(f"    Dataset name: {header[key].get('name')}")
-                    print(f"    Created: {header[key].get('dateCreated')}")
+        # Check for extensions (in the new structure)
+        if 'extensions_data' in header:
+            print(f"  Extensions: {', '.join(header['extensions_data'].keys())}")
+            
+            # Access extension data directly
+            if 'meta' in header['extensions_data']:
+                meta = header['extensions_data']['meta']
+                print(f"    Dataset name: {meta.get('name')}")
+                print(f"    Created: {meta.get('dateCreated')}")
         
         # Now read the full file with data
         full_header, data = read(filename)

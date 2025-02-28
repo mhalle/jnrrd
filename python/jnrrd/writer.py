@@ -28,16 +28,15 @@ def _flatten_extensions(header: Dict[str, Any]) -> Dict[str, Any]:
     """
     result = {}
     
-    # Copy regular fields
+    # Copy regular fields (excluding 'extensions_data' which will be processed specially)
     for key, value in header.items():
-        if not key.startswith('jnrrd_ext_'):
+        if key != 'extensions_data':
             result[key] = value
     
-    # Process extension fields
-    for key, value in header.items():
-        if key.startswith('jnrrd_ext_'):
-            prefix = key[10:]  # Remove 'jnrrd_ext_'
-            _flatten_object(prefix, value, '', result)
+    # Process extension fields from the extensions_data dictionary
+    if 'extensions_data' in header:
+        for prefix, ext_data in header['extensions_data'].items():
+            _flatten_object(prefix, ext_data, '', result)
     
     return result
 
