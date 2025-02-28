@@ -175,26 +175,31 @@ There is no limit to the depth of the hierarchy that can be represented:
 {"metadata:level1.level2.level3.level4": "deeply_nested_value"}
 ```
 
-### 4.5 Metadata Extension Example
+### 4.5 Metadata Extension
 
-The metadata extension provides a simple example of using extensions:
+JNRRD provides a comprehensive metadata extension based on schema.org vocabulary. This extension, detailed in [metadata-extension.md](./metadata-extension.md), enables rich dataset description with fields for attribution, scientific context, and technical details.
+
+A simple example of using the metadata extension:
 
 ```json
-{"extensions": {"metadata": "https://jnrrd.org/extensions/metadata/v1.0.0"}}
-{"metadata:name": "T1-weighted Brain MRI Dataset"}
-{"metadata:description": "3D T1-weighted MRI brain scan of healthy adult subject"}
-{"metadata:license": "https://creativecommons.org/licenses/by/4.0/"}
-{"metadata:creator": {
-  "type": "Organization",
+{"extensions": {"meta": "https://jnrrd.org/extensions/metadata/v1.0.0"}}
+{"meta:@type": "Dataset"}
+{"meta:name": "T1-weighted Brain MRI Dataset"}
+{"meta:description": "3D T1-weighted MRI brain scan of healthy adult subject"}
+{"meta:license": "https://creativecommons.org/licenses/by/4.0/"}
+{"meta:creator": {
+  "@type": "Organization",
   "name": "Medical Research Lab",
   "url": "https://example.org/lab"
 }}
-{"metadata:dateCreated": "2021-08-23"}
-{"metadata:contentUrl": "https://example.org/datasets/brain0001.jnrrd"}
-{"metadata:keywords": ["neuroimaging", "T1-weighted", "MRI", "brain"]}
+{"meta:dateCreated": "2021-08-23"}
+{"meta:contentUrl": "https://example.org/datasets/brain0001.jnrrd"}
+{"meta:keywords": ["neuroimaging", "T1-weighted", "MRI", "brain"]}
 ```
 
-The JSON Schema at `https://jnrrd.org/extensions/metadata/v1.0.0` would define properties like `name`, `description`, `license`, etc., without the `metadata:` prefix that appears in the JNRRD file. When validating, the validation process strips the prefix from field names before comparing them to the schema.
+The metadata extension follows schema.org vocabulary conventions, making JNRRD files more discoverable and interoperable with existing metadata ecosystems. For complete details on available fields, validation rules, and examples, see the [metadata extension specification](./metadata-extension.md).
+
+When validating, the validation process strips the `meta:` prefix from field names before comparing them to the schema. The JSON Schema defines properties like `name`, `description`, and `license` without this prefix.
 
 ### 4.6 Priority Rules for Hierarchical Fields
 
