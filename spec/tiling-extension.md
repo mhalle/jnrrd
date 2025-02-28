@@ -97,6 +97,31 @@ The pattern uses placeholders like `{x}`, `{y}`, `{z}` for coordinates and `{i}`
 {"tile:pattern": "data_{z}_{y}_{x}.raw"}
 ```
 
+With full file path examples:
+
+```json
+{"tile:pattern": "/data/project123/slices/slice_{z}/data_{y}_{x}.raw"}
+```
+
+Using a base directory:
+
+```json
+{"tile:base_dir": "/data/project123/"}
+{"tile:pattern": "slices/slice_{z}/data_{y}_{x}.raw"}
+```
+
+Remote HTTP access:
+
+```json
+{"tile:pattern": "https://data.example.org/volumes/brain109/tiles/{z}_{y}_{x}.raw"}
+```
+
+Cloud storage access:
+
+```json
+{"tile:pattern": "s3://medical-imaging/patient4563/ct-scan/tiles/z{z}_y{y}_x{x}.raw.gz"}
+```
+
 ### 6.2 Explicit File Listing
 
 Alternatively, files can be listed explicitly:
@@ -109,6 +134,20 @@ Alternatively, files can be listed explicitly:
   ...
 ]}
 ```
+
+With mixed local, remote, and cloud storage locations:
+
+```json
+{"tile:files": [
+  {"indices": [0,0,0], "file": "/local/cache/tile_0_0_0.raw"},
+  {"indices": [1,0,0], "file": "https://remote.server.org/tiles/tile_1_0_0.raw"},
+  {"indices": [0,1,0], "file": "s3://bucket/tiles/tile_0_1_0.raw"},
+  {"indices": [1,1,0], "file": "gs://another-bucket/tiles/tile_1_1_0.raw"},
+  {"indices": [0,0,1], "file": "azure://container/tiles/tile_0_0_1.raw"}
+]}
+```
+
+The format supports the use of mixed storage locations, allowing some tiles to be stored locally and others remotely, which is useful for caching frequently accessed tiles.
 
 ## 7. Optional Features
 
@@ -273,16 +312,38 @@ For external tiling, multi-resolution is supported using patterns with level pla
 {"tile:pattern": "tiles/level_{l}/volume_{z}_{y}_{x}.raw"}
 ```
 
-Or explicit file listings:
+With remote storage examples:
+
+```json
+{"tile:pattern": "https://data.example.org/datasets/brain/levels/{l}/tiles_{z}_{y}_{x}.raw"}
+```
+
+```json
+{"tile:pattern": "s3://neuroimaging-archive/patient0042/pyramid/res{l}/{z}/{y}/{x}.raw.gz"}
+```
+
+```json
+{"tile:base_dir": "https://cdn.imaging-platform.org/public-datasets/"}
+{"tile:pattern": "mouse-brain-atlas/version2/resolution_{l}/{z}_{y}_{x}.zstd"}
+```
+
+Or explicit file listings with mixed sources:
 
 ```json
 {"tile:files": [
-  {"level": 0, "indices": [0,0,0], "file": "tiles/level0/0_0_0.raw"},
-  {"level": 0, "indices": [1,0,0], "file": "tiles/level0/1_0_0.raw"},
-  {"level": 1, "indices": [0,0,0], "file": "tiles/level1/0_0_0.raw"},
+  {"level": 0, "indices": [0,0,0], "file": "/local/cache/hires/0_0_0.raw"},
+  {"level": 0, "indices": [1,0,0], "file": "https://remote.server.org/hires/1_0_0.raw"},
+  {"level": 1, "indices": [0,0,0], "file": "s3://bucket/midres/0_0_0.raw"},
+  {"level": 2, "indices": [0,0,0], "file": "gs://public-bucket/lowres/0_0_0.raw"},
   ...
 ]}
 ```
+
+This approach enables efficient multi-resolution workflows where:
+- Low-resolution levels can be stored on faster, more accessible storage
+- High-resolution data can be accessed from archival or high-capacity storage
+- Frequently accessed tiles can be cached locally
+- Visualization applications can quickly load overviews before fetching details
 
 #### 7.4.7 Use Cases for Multi-Resolution Tiling
 
@@ -400,7 +461,9 @@ def read_tile(file_path, tile_coords, header):
 [BINARY DATA OF TILES IN SEQUENCE]
 ```
 
-### 9.2 External Tiling Example
+### 9.2 External Tiling Examples
+
+#### 9.2.1 Local File System Example
 
 ```
 {"jnrrd": "0004"}
@@ -421,7 +484,80 @@ def read_tile(file_path, tile_coords, header):
 [NO BINARY DATA - TILES STORED IN EXTERNAL FILES]
 ```
 
-### 9.3 Multi-Resolution Example
+#### 9.2.2 Cloud Storage Example
+
+```
+{"jnrrd": "0004"}
+{"type": "float32"}
+{"dimension": 3}
+{"sizes": [8192, 8192, 2048]}
+{"endian": "little"}
+{"space": "right_anterior_superior"}
+{"extensions": {"tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2]}
+{"tile:sizes": [512, 512, 128]}
+{"tile:storage": "external"}
+{"tile:pattern": "s3://neuroimaging-bucket/acquisitions/2023-05-12/subject0042/tiles/{z}/{y}/{x}.zstd"}
+{"tile:compression": "zstd"}
+
+[NO BINARY DATA - TILES STORED IN CLOUD STORAGE]
+```
+
+#### 9.2.3 HTTP CDN Example
+
+```
+{"jnrrd": "0004"}
+{"type": "uint8"}
+{"dimension": 3}
+{"sizes": [16384, 16384, 4096]}
+{"endian": "little"}
+{"space": "right_anterior_superior"}
+{"extensions": {"tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+{"extensions": {"dicom": "https://jnrrd.org/extensions/dicom/v1.0.0"}}
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2]}
+{"tile:sizes": [256, 256, 64]}
+{"tile:storage": "external"}
+{"tile:pattern": "https://tiles.medical-imaging.example.org/studies/{study_id}/series/{series_id}/tiles/{z}/{y}/{x}.lz4"}
+{"tile:compression": "lz4"}
+{"dicom:study.instance_uid": "1.2.840.113619.2.334.3.2831183778.864.1629754903.547"}
+{"dicom:series.instance_uid": "1.2.840.113619.2.334.3.2831183778.864.1629754903.550"}
+
+[NO BINARY DATA - TILES STORED ON HTTP SERVER]
+```
+
+#### 9.2.4 Mixed Storage Locations Example
+
+```
+{"jnrrd": "0004"}
+{"type": "uint16"}
+{"dimension": 3}
+{"sizes": [4096, 4096, 1024]}
+{"endian": "little"}
+{"space": "right_anterior_superior"}
+{"extensions": {"tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2]}
+{"tile:sizes": [256, 256, 64]}
+{"tile:storage": "external"}
+{"tile:files": [
+  {"indices": [0,0,0], "file": "/local/cache/0_0_0.raw"},
+  {"indices": [1,0,0], "file": "/local/cache/1_0_0.raw"},
+  {"indices": [0,1,0], "file": "https://cdn.example.org/tiles/0_1_0.raw"},
+  {"indices": [1,1,0], "file": "https://cdn.example.org/tiles/1_1_0.raw"},
+  {"indices": [0,0,1], "file": "s3://image-archive/tiles/0_0_1.raw"},
+  {"indices": [1,0,1], "file": "s3://image-archive/tiles/1_0_1.raw"},
+  {"indices": [0,1,1], "file": "s3://image-archive/tiles/0_1_1.raw"},
+  {"indices": [1,1,1], "file": "s3://image-archive/tiles/1_1_1.raw"}
+]}
+
+[NO BINARY DATA - TILES STORED IN MIXED LOCATIONS]
+```
+
+### 9.3 Multi-Resolution Examples
+
+#### 9.3.1 Internal Multi-Resolution Example
 
 ```
 {"jnrrd": "0004"}
@@ -442,6 +578,91 @@ def read_tile(file_path, tile_coords, header):
 {"tile:offset_table": [1024, 4198400, 8395776, ...]}
 
 [BINARY DATA OF TILES IN SEQUENCE, ALL RESOLUTION LEVELS]
+```
+
+#### 9.3.2 Remote Multi-Resolution Example
+
+```
+{"jnrrd": "0004"}
+{"type": "float32"}
+{"dimension": 3}
+{"sizes": [16384, 16384, 4096]}
+{"endian": "little"}
+{"extensions": {"tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2]}
+{"tile:sizes": [256, 256, 64]}
+{"tile:storage": "external"}
+{"tile:levels": 5}
+{"tile:level_scales": [1, 2, 4, 8, 16]}
+{"tile:pattern": "https://brain-atlas.example.org/datasets/hbm2023/pyramid/level{l}/{z}/{y}/{x}.zstd"}
+{"tile:compression": "zstd"}
+{"tile:downsample_method": "lanczos"}
+
+[NO BINARY DATA - MULTI-RESOLUTION TILES STORED ON REMOTE SERVER]
+```
+
+#### 9.3.3 Hybrid Storage Multi-Resolution Example
+
+```
+{"jnrrd": "0004"}
+{"type": "uint16"}
+{"dimension": 3}
+{"sizes": [32768, 32768, 8192]}
+{"endian": "little"}
+{"extensions": {"tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2]}
+{"tile:sizes": [256, 256, 64]}
+{"tile:storage": "external"}
+{"tile:levels": 6}
+{"tile:level_scales": [1, 2, 4, 8, 16, 32]}
+{"tile:files": [
+  {"level": 5, "indices": [0,0,0], "file": "/local/cache/tiles/level5/0_0_0.raw"},
+  {"level": 4, "indices": [0,0,0], "file": "/local/cache/tiles/level4/0_0_0.raw"},
+  {"level": 4, "indices": [1,0,0], "file": "/local/cache/tiles/level4/1_0_0.raw"}
+]}
+{"tile:pattern": "s3://massive-microscopy-dataset/acquisition003/pyramid/{l}/{z}/{y}/{x}.lz4"}
+{"tile:compression": "lz4"}
+{"tile:downsample_method": "gaussian"}
+
+[NO BINARY DATA - MULTI-RESOLUTION TILES STORED IN HYBRID LOCATIONS]
+```
+
+In this example, the lowest resolutions (levels 4 and 5) and some tiles from higher resolutions are cached locally, while the bulk of the high-resolution data remains in cloud storage. This allows for efficient browsing of the dataset with immediate access to overview images, while detailed exploration can fetch additional tiles from the cloud as needed.
+
+#### 9.3.4 Visualization Client Logic Example
+
+When a client opens this dataset, it might implement logic like:
+
+```python
+def visualize_dataset(jnrrd_path):
+    # Load JNRRD header
+    header = load_jnrrd_header(jnrrd_path)
+    
+    # Start by loading the lowest resolution (highest level number)
+    level = header["tile:levels"] - 1
+    overview_tiles = load_level_tiles(header, level)
+    display_overview(overview_tiles)
+    
+    # As user zooms in, load higher resolution data
+    while user_is_zooming_in():
+        visible_region = get_current_view_region()
+        
+        # Determine appropriate resolution level based on zoom
+        appropriate_level = calculate_level_for_zoom(header, zoom_factor)
+        
+        # Load only visible tiles at the appropriate resolution
+        visible_tiles = get_visible_tile_indices(header, appropriate_level, visible_region)
+        
+        for tile_index in visible_tiles:
+            if not is_tile_cached(tile_index, appropriate_level):
+                # Fetch tile from remote/cloud storage
+                tile_data = fetch_tile(header, appropriate_level, tile_index)
+                cache_tile(tile_data, appropriate_level, tile_index)
+            
+            # Display the tile
+            display_tile(get_cached_tile(appropriate_level, tile_index))
 ```
 
 ## 10. Future Extensions
