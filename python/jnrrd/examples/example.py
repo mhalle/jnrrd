@@ -13,7 +13,7 @@ import time
 # Add the parent directory to the path so we can import jnrrd
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from jnrrd import read, read_header, write, write_detached
+from jnrrd import read, read_header, write, write_detached, JnrrdFile
 
 
 def create_sample_data(shape=(10, 20, 30)):
@@ -153,6 +153,75 @@ def example_read(encodings):
     print(f"  Data range: [{data.min():.4f}, {data.max():.4f}]")
 
 
+def example_class_based():
+    """
+    Example using the more Pythonic class-based API.
+    """
+    print("\nDemonstrating class-based API...")
+    
+    # Create sample data
+    data = create_sample_data((5, 10, 15))
+    
+    # Create a new JNRRD file object
+    jnrrd = JnrrdFile()
+    jnrrd.data = data
+    
+    # Set core header fields
+    jnrrd.header = {
+        'content': 'Class-based API Example',
+        'space': 'right-anterior-superior',
+        'spacings': [0.5, 0.5, 1.0],
+        'labels': ['x', 'y', 'z']
+    }
+    
+    # Add extensions directly
+    jnrrd.add_extension('meta', {
+        'name': 'Class API Example',
+        'description': 'Example using the JnrrdFile class API',
+        'creator': {
+            'name': 'JNRRD Python Library',
+            'version': '0.2.0'
+        }
+    })
+    
+    # Add technical parameters as a separate extension
+    jnrrd.add_extension('params', {
+        'algorithm': 'sample',
+        'created': time.strftime('%Y-%m-%d %H:%M:%S')
+    })
+    
+    # Save the file
+    filename = 'class_example.jnrrd'
+    jnrrd.save(filename, encoding='gzip')
+    print(f"  Saved {filename}, size: {os.path.getsize(filename):,} bytes")
+    
+    # Read it back using the class API
+    print("  Reading back the file...")
+    loaded = JnrrdFile.open(filename)
+    
+    # Display header and extensions
+    print(f"  Content: {loaded.header.get('content')}")
+    print(f"  Data shape: {loaded.data.shape}")
+    
+    # Access extensions directly
+    if 'meta' in loaded.extensions:
+        meta = loaded.extensions['meta']
+        print(f"  Dataset name: {meta.get('name')}")
+        print(f"  Creator: {meta.get('creator', {}).get('name')}")
+    
+    if 'params' in loaded.extensions:
+        params = loaded.extensions['params']
+        print(f"  Created: {params.get('created')}")
+    
+    # Save with detached data
+    header_file = 'class_example.header.jnrrd'
+    data_file = 'class_example.data.raw'
+    loaded.save_detached(header_file, data_file)
+    print(f"  Saved detached files:")
+    print(f"    Header: {os.path.getsize(header_file):,} bytes")
+    print(f"    Data: {os.path.getsize(data_file):,} bytes")
+
+
 def main():
     """Main function"""
     print("JNRRD Python Library Example\n")
@@ -166,6 +235,9 @@ def main():
     # Run examples
     encodings = example_write()
     example_read(encodings)
+    
+    # Run class-based example
+    example_class_based()
     
     print("\nExample completed successfully!")
 

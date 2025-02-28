@@ -678,9 +678,10 @@ def read(filename: str) -> Tuple[Dict[str, Any], np.ndarray]:
     >>> print(f"Data shape: {data.shape}")
     >>> print(f"Data type: {data.dtype}")
     >>> print(f"Content: {header.get('content', 'Unknown')}")
-    >>> # Access any extension fields
-    >>> if 'jnrrd_ext_meta' in header:
-    ...     print(f"Dataset name: {header['jnrrd_ext_meta'].get('name', 'Unnamed')}")
+    >>> # Access extension fields
+    >>> if 'extensions_data' in header:
+    ...     meta = header['extensions_data'].get('meta', {})
+    ...     print(f"Dataset name: {meta.get('name', 'Unnamed')}")
     """
     # Read the header
     header = read_header(filename)
@@ -692,3 +693,154 @@ def read(filename: str) -> Tuple[Dict[str, Any], np.ndarray]:
     data = _read_data(filename, header)
     
     return header, data
+
+
+class JnrrdFile:
+    """
+    A class representing a JNRRD file with separate access to header and extensions.
+    
+    This class provides a more Pythonic interface to JNRRD files by separating
+    core header fields from extensions and providing direct access methods.
+    
+    Attributes
+    ----------
+    header : Dict[str, Any]
+        Core header fields (dimension, sizes, type, etc.)
+    extensions : Dict[str, Dict[str, Any]]
+        Extension data organized by namespace 
+    data : np.ndarray
+        The array data contained in the file
+        
+    Examples
+    --------
+    >>> jnrrd = JnrrdFile.open('example.jnrrd')
+    >>> print(f"Data shape: {jnrrd.data.shape}")
+    >>> print(f"Content: {jnrrd.header.get('content')}")
+    >>> # Access extension data directly
+    >>> if 'meta' in jnrrd.extensions:
+    ...     print(f"Dataset name: {jnrrd.extensions['meta'].get('name')}")
+    """
+    
+    def __init__(self):
+        """Initialize an empty JNRRD file object."""
+        self.header = {}
+        self.extensions = {}
+        self.data = None
+    
+    @classmethod
+    def open(cls, filename: str) -> 'JnrrdFile':
+        """
+        Open a JNRRD file and return a JnrrdFile object.
+        
+        Parameters
+        ----------
+        filename : str
+            Path to the JNRRD file
+            
+        Returns
+        -------
+        JnrrdFile
+            A JnrrdFile object with header, extensions, and data
+        """
+        # Create a new object
+        jnrrd_file = cls()
+        
+        # Read the file
+        file_header, data = read(filename)
+        
+        # Separate header from extensions
+        jnrrd_file.data = data
+        
+        # Extract extension data (if present)
+        if 'extensions_data' in file_header:
+            jnrrd_file.extensions = file_header.pop('extensions_data')
+        
+        # Store remaining fields as header
+        jnrrd_file.header = file_header
+        
+        return jnrrd_file
+    
+    def save(self, filename: str, encoding: str = 'raw', compression_level: int = 9) -> None:
+        """
+        Save the JNRRD file to disk.
+        
+        Parameters
+        ----------
+        filename : str
+            Path to save the file
+        encoding : str, optional
+            Encoding method to use ('raw', 'gzip', 'bzip2', 'zstd', 'lz4', 'ascii', 'hex')
+        compression_level : int, optional
+            Compression level for compressed encodings
+        """
+        # Combine header and extensions
+        combined_header = self.header.copy()
+        
+        # Add extensions data if present
+        if self.extensions:
+            combined_header['extensions_data'] = self.extensions
+        
+        # Save to file
+        write(filename, combined_header, self.data, encoding, compression_level)
+    
+    def save_detached(self, header_file: str, data_file: str, encoding: str = 'raw', 
+                     compression_level: int = 9) -> None:
+        """
+        Save the JNRRD file with detached data.
+        
+        Parameters
+        ----------
+        header_file : str
+            Path to save the header file
+        data_file : str
+            Path to save the data file
+        encoding : str, optional
+            Encoding method to use ('raw', 'gzip', 'bzip2', 'zstd', 'lz4', 'ascii', 'hex')
+        compression_level : int, optional
+            Compression level for compressed encodings
+        """
+        # Combine header and extensions
+        combined_header = self.header.copy()
+        
+        # Add extensions data if present
+        if self.extensions:
+            combined_header['extensions_data'] = self.extensions
+        
+        # Save to files
+        write_detached(header_file, data_file, combined_header, self.data, encoding, compression_level)
+    
+    def add_extension(self, extension_name: str, data: Dict[str, Any]) -> None:
+        """
+        Add or update an extension to the JNRRD file.
+        
+        Parameters
+        ----------
+        extension_name : str
+            Name of the extension (e.g., 'meta', 'dicom', 'custom')
+        data : Dict[str, Any]
+            Extension data
+        """
+        self.extensions[extension_name] = data
+        
+        # Also update the extensions declaration in header
+        if 'extensions' not in self.header:
+            self.header['extensions'] = {}
+        
+        # Add or update the extension URI
+        self.header['extensions'][extension_name] = f"https://jnrrd.org/extensions/{extension_name}/v1.0.0"
+    
+    def get_extension(self, extension_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get extension data by name.
+        
+        Parameters
+        ----------
+        extension_name : str
+            Name of the extension (e.g., 'meta', 'dicom', 'custom')
+            
+        Returns
+        -------
+        Optional[Dict[str, Any]]
+            Extension data, or None if not found
+        """
+        return self.extensions.get(extension_name)
