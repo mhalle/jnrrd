@@ -311,13 +311,124 @@ Private DICOM tags can be included using the `dicom:private_tag` field:
 }}
 ```
 
-## 5. Relationship with JNRRD Space Information
+## 5. DICOM Coordinate Systems and Transformations
 
-The DICOM coordinate system information should be mapped to the corresponding JNRRD space fields:
+### 5.1 DICOM Patient Coordinate System
+
+As defined in DICOM Standard PS3.3, Section C.7.6.2.1.1:
+
+> If Anatomical Orientation Type (0010,2210) is absent or has a value of BIPED, the x-axis is increasing to the left hand side of the patient. The y-axis is increasing to the posterior side of the patient. The z-axis is increasing toward the head of the patient.
+
+This is known as the LPS (Left-Posterior-Superior) coordinate system. In the JNRRD DICOM extension, we represent this using:
 
 ```json
-# DICOM coordinate system in JNRRD fields
-{"space": "left_posterior_superior"}  # Standard DICOM patient coordinate system
+{"dicom:patient_coordinate_system": "left-posterior-superior"}
+```
+
+The DICOM patient coordinate system provides the frame of reference in which the Image Position Patient (IPP) and Image Orientation Patient (IOP) values are defined. This is a fixed coordinate system relative to the patient, regardless of how the image acquisition was performed.
+
+### 5.2 Mapping Array Coordinates to DICOM Patient Coordinates
+
+According to the DICOM Standard (Section C.7.6.2.1.1), the transformation from pixel/voxel indices to the patient coordinate system is defined using:
+
+1. **Image Orientation Patient (0020,0037)**: Direction cosines of the row and column with respect to the patient
+2. **Image Position Patient (0020,0032)**: X, Y, and Z coordinates of the upper left corner of the image
+3. **Pixel Spacing (0028,0030)**: Physical distance between the centers of adjacent pixels
+
+The DICOM standard specifies the mapping from pixel location (i,j) to the patient coordinate system as follows:
+
+```
+⎡Px⎤   ⎡Xx*Δi   Yx*Δj   0   Sx⎤   ⎡i⎤
+⎢Py⎥ = ⎢Xy*Δi   Yy*Δj   0   Sy⎥ * ⎢j⎥
+⎢Pz⎥   ⎢Xz*Δi   Yz*Δj   0   Sz⎥   ⎢0⎥
+⎣1 ⎦   ⎣0       0       0   1 ⎦   ⎣1⎦
+```
+
+Where:
+- Pxyz: The coordinates of the pixel (i,j) in patient coordinates (mm)
+- Sxyz: The values of Image Position Patient (mm)
+- Xxyz: The values from the row (X) direction cosine of Image Orientation Patient
+- Yxyz: The values from the column (Y) direction cosine of Image Orientation Patient
+- i: Column index (the first column is index zero)
+- j: Row index (the first row index is zero)
+- Δi: Column pixel resolution of Pixel Spacing (mm)
+- Δj: Row pixel resolution of Pixel Spacing (mm)
+
+For 3D volumes with multiple slices, determining the slice position requires additional calculation. For regular slice spacing, the third column of the matrix can be derived from:
+
+1. The cross product of the row and column direction cosines (for a single slice)
+2. The vector between Image Position Patient values of the first and last slices (for multiple slices)
+
+```
+For multiple slices:
+k_vector = (TN - T1) / (N-1)
+
+Where:
+- TN: Image Position Patient of the last slice
+- T1: Image Position Patient of the first slice
+- N: Number of slices
+```
+
+### 5.3 DICOM Transformation in JNRRD
+
+The DICOM transformation can be represented in JNRRD using the DICOM extension fields that match the DICOM tags exactly:
+
+```json
+{"dicom:image": {
+  "image_orientation_patient": [Xx, Xy, Xz, Yx, Yy, Yz],
+  "image_position_patient": [Sx, Sy, Sz],
+  "pixel_spacing": [Δj, Δi]
+}}
+```
+
+This preserves the original DICOM values without reinterpretation.
+
+For convenience, the complete transformation matrix can be derived and stored:
+
+```json
+{"dicom:image_to_patient_matrix": [
+  [Xx*Δi, Yx*Δj, 0.0, Sx],
+  [Xy*Δi, Yy*Δj, 0.0, Sy],
+  [Xz*Δi, Yz*Δj, 0.0, Sz],
+  [0.0, 0.0, 0.0, 1.0]
+]}
+```
+
+For a 3D volume with regular slice spacing, the third column can be set appropriately:
+
+```json
+{"dicom:image_to_patient_matrix": [
+  [Xx*Δi, Yx*Δj, k_x, Sx],
+  [Xy*Δi, Yy*Δj, k_y, Sy],
+  [Xz*Δi, Yz*Δj, k_z, Sz],
+  [0.0, 0.0, 0.0, 1.0]
+]}
+```
+
+Where `[k_x, k_y, k_z]` is derived as described in section 5.2.
+
+### 5.4 Relationship with JNRRD Core Space Information
+
+The DICOM coordinate information should be mapped to corresponding JNRRD core space fields as follows:
+
+```json
+{"space": "left-posterior-superior"}  # Standard DICOM patient coordinate system
+
+{"space_directions": [
+  [Xx*Δi, Xy*Δi, Xz*Δi],
+  [Yx*Δj, Yy*Δj, Yz*Δj],
+  [k_x, k_y, k_z]
+]}
+
+{"space_origin": [Sx, Sy, Sz]}
+```
+
+Note that in JNRRD and NRRD, the matrix elements in `space_directions` are arranged differently than in the DICOM transformation matrix. The `space_directions` matrix contains the change in patient coordinates as you move along each axis of the array, with each row representing a direction vector.
+
+For a standard axial acquisition with no gantry tilt (assuming millimeter units):
+
+```json
+{"space": "left-posterior-superior"}
 {"space_directions": [
   [0.9375, 0.0, 0.0],
   [0.0, 0.9375, 0.0],
@@ -326,9 +437,202 @@ The DICOM coordinate system information should be mapped to the corresponding JN
 {"space_origin": [-100.0, -100.0, -50.0]}
 ```
 
-The values should correspond to:
-- `image_orientation_patient` and `pixel_spacing` for `space_directions`
-- `image_position_patient` for `space_origin`
+This representation corresponds to:
+- Image orientation where the first row is along the patient's left
+- Image orientation where the first column is along the patient's posterior
+- Pixel spacing of 0.9375mm in both row and column directions
+- Slice spacing of 5.0mm in the superior direction
+- Image position (upper left corner of the first slice) at [-100.0, -100.0, -50.0]mm in patient coordinates
+
+### 5.5 DICOM and NRRD Coordinate System Differences
+
+DICOM's LPS (Left-Posterior-Superior) coordinate system differs from the RAS (Right-Anterior-Superior) coordinate system often used in neuroimaging applications and some NRRD files:
+
+| DICOM (LPS) | RAS       |
+|-------------|-----------|
+| +X = Left   | +X = Right |
+| +Y = Posterior | +Y = Anterior |
+| +Z = Superior | +Z = Superior |
+
+To convert between these coordinate systems:
+- X_RAS = -X_LPS
+- Y_RAS = -Y_LPS
+- Z_RAS = Z_LPS
+
+This conversion can be represented as:
+
+```json
+{"space": "left-posterior-superior"}
+```
+
+versus:
+
+```json
+{"space": "right-anterior-superior"}
+```
+
+The transformation matrix between these coordinate systems is:
+
+```json
+{"dicom:lps_to_ras_transform": {
+  "type": "affine",
+  "matrix": [
+    [-1.0, 0.0, 0.0, 0.0],
+    [0.0, -1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0]
+  ]
+}}
+```
+
+When converting DICOM data to JNRRD files, it's important to either preserve the original DICOM LPS coordinate system or explicitly document the transformation if converting to RAS or another coordinate system.
+
+### 5.6 Integration with the Transforms Extension
+
+When using both DICOM and transforms extensions together, coordinate systems and transformations can be explicitly defined using the transforms extension syntax. This approach provides a clean separation between the DICOM metadata and the spatial transformation information.
+
+```json
+{"extensions": {
+  "dicom": "https://jnrrd.org/extensions/dicom/v1.0.0",
+  "transform": "https://jnrrd.org/extensions/transforms/v1.0.0"
+}}
+
+{"transform:coordinateSystems": [
+  {
+    "name": "array",
+    "axes": [
+      {"name": "dim_0", "type": "array"},
+      {"name": "dim_1", "type": "array"},
+      {"name": "dim_2", "type": "array"}
+    ]
+  },
+  {
+    "name": "DICOM-LPS",
+    "axes": [
+      {"name": "x", "type": "space", "unit": "millimeter"},
+      {"name": "y", "type": "space", "unit": "millimeter"},
+      {"name": "z", "type": "space", "unit": "millimeter"}
+    ]
+  },
+  {
+    "name": "RAS",
+    "axes": [
+      {"name": "x", "type": "space", "unit": "millimeter"},
+      {"name": "y", "type": "space", "unit": "millimeter"},
+      {"name": "z", "type": "space", "unit": "millimeter"}
+    ]
+  }
+]}
+
+{"dicom:image": {
+  "image_orientation_patient": [Xx, Xy, Xz, Yx, Yy, Yz],
+  "image_position_patient": [Sx, Sy, Sz],
+  "pixel_spacing": [Δj, Δi],
+  "slice_thickness": 5.0
+}}
+
+{"transform:transformations": [
+  {
+    "name": "array_to_DICOM",
+    "type": "affine",
+    "input": "array",
+    "output": "DICOM-LPS",
+    "affine": [
+      [Xx*Δi, Yx*Δj, 0.0, Sx],
+      [Xy*Δi, Yy*Δj, 0.0, Sy],
+      [Xz*Δi, Yz*Δj, 5.0, Sz],
+      [0.0, 0.0, 0.0, 1.0]
+    ]
+  },
+  {
+    "name": "DICOM_to_RAS",
+    "type": "affine",
+    "input": "DICOM-LPS",
+    "output": "RAS",
+    "affine": [
+      [-1.0, 0.0, 0.0, 0.0],
+      [0.0, -1.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]
+  }
+]}
+```
+
+This approach:
+
+1. Preserves original DICOM metadata in the `dicom:image` fields
+2. Explicitly defines the array, DICOM-LPS, and RAS coordinate systems
+3. Provides transformations between these coordinate systems
+4. Allows applications to work with either coordinate system as needed
+
+For a complete example:
+
+```json
+{"jnrrd": "0004"}
+{"type": "int16"}
+{"dimension": 3}
+{"sizes": [512, 512, 120]}
+{"endian": "little"}
+{"encoding": "raw"}
+{"space": "left-posterior-superior"}
+{"space_directions": [
+  [0.9375, 0.0, 0.0],
+  [0.0, 0.9375, 0.0],
+  [0.0, 0.0, 5.0]
+]}
+{"space_origin": [-180.0, -180.0, -200.0]}
+{"extensions": {
+  "dicom": "https://jnrrd.org/extensions/dicom/v1.0.0",
+  "transform": "https://jnrrd.org/extensions/transforms/v1.0.0"
+}}
+
+{"dicom:patient": {"id": "ANONYMOUS", "sex": "M"}}
+{"dicom:study": {"description": "CHEST CT", "date": "20210823"}}
+{"dicom:series": {"modality": "CT", "description": "AXIAL 5MM"}}
+{"dicom:image": {
+  "image_orientation_patient": [1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+  "image_position_patient": [-180.0, -180.0, -200.0],
+  "pixel_spacing": [0.9375, 0.9375],
+  "slice_thickness": 5.0
+}}
+
+{"transform:coordinateSystems": [
+  {
+    "name": "array",
+    "axes": [
+      {"name": "dim_0", "type": "array"},
+      {"name": "dim_1", "type": "array"},
+      {"name": "dim_2", "type": "array"}
+    ]
+  },
+  {
+    "name": "DICOM-LPS",
+    "axes": [
+      {"name": "x", "type": "space", "unit": "millimeter"},
+      {"name": "y", "type": "space", "unit": "millimeter"},
+      {"name": "z", "type": "space", "unit": "millimeter"}
+    ]
+  }
+]}
+
+{"transform:transformations": [
+  {
+    "name": "array_to_DICOM",
+    "type": "affine",
+    "input": "array",
+    "output": "DICOM-LPS",
+    "affine": [
+      [0.9375, 0.0, 0.0, -180.0],
+      [0.0, 0.9375, 0.0, -180.0],
+      [0.0, 0.0, 5.0, -200.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]
+  }
+]}
+```
+
+This approach ensures maximum interoperability between DICOM data, JNRRD files, and different software packages that may expect different coordinate conventions.
 
 ## 6. Examples
 
