@@ -591,11 +591,108 @@ When used with the JNRRD Tiling Extension, the OME extension provides guidance f
     "C": 1,
     "T": 1
   },
-  "access_pattern": "XY_slices"
+  "access_pattern": "XY_slices",
+  "dimension_mapping": {
+    "X": 0,
+    "Y": 1,
+    "Z": 2,
+    "C": 3,
+    "T": 4
+  }
 }}
 ```
 
-This field suggests optimal tiling parameters for microscopy data.
+The `preferred_chunk_sizes` field suggests optimal tiling parameters for microscopy data based on the biological meaning of each dimension. The `dimension_mapping` explicitly links OME dimensions to JNRRD dimension indices, ensuring correct interpretation by analysis tools.
+
+#### 5.2.1 Microscopy-Specific Tiling Recommendations
+
+Different types of microscopy data benefit from different tiling strategies:
+
+| Microscopy Technique | Recommended Tile Sizes | Notes |
+|----------------------|------------------------|-------|
+| Wide-field fluorescence | `XY`: 256×256, `Z`: 16-32, `C`: 1, `T`: 1 | Standard microscopy tiles |
+| Confocal imaging | `XY`: 256×256, `Z`: 32-64, `C`: 1, `T`: 1 | Deeper Z-stacks |
+| Light-sheet microscopy | `XY`: 256×256, `Z`: 64-128, `C`: 1, `T`: 1 | Very deep Z-stacks |
+| Time-lapse imaging | `XY`: 256×256, `Z`: All, `C`: 1, `T`: 1 | Full Z-stacks per timepoint |
+| High-content screening | `XY`: 512×512, `Z`: All, `C`: All, `T`: 1 | Optimize for well-to-well navigation |
+
+#### 5.2.2 Combined OME-Tiling Extension Example
+
+Here is a complete example of using both OME and tiling extensions together:
+
+```json
+{"jnrrd": "0004"}
+{"type": "uint16"}
+{"dimension": 5}
+{"sizes": [2048, 2048, 100, 4, 10]}
+{"endian": "little"}
+{"encoding": "raw"}
+{"extensions": {"ome": "https://jnrrd.org/extensions/ome/v1.0.0", "tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+
+{"ome:dimensions": {
+  "order": "XYZCT",
+  "physical_sizes": {
+    "X": {"value": 0.1, "unit": "µm"},
+    "Y": {"value": 0.1, "unit": "µm"},
+    "Z": {"value": 0.5, "unit": "µm"},
+    "T": {"value": 30.0, "unit": "s"}
+  }
+}}
+
+{"ome:channels": [
+  {"id": "Channel:0", "name": "DAPI", "fluorophore": "DAPI", "color": "#0000FF"},
+  {"id": "Channel:1", "name": "GFP", "fluorophore": "eGFP", "color": "#00FF00"},
+  {"id": "Channel:2", "name": "RFP", "fluorophore": "mCherry", "color": "#FF0000"},
+  {"id": "Channel:3", "name": "Far-Red", "fluorophore": "Cy5", "color": "#FF00FF"}
+]}
+
+{"ome:tiling_strategy": {
+  "preferred_chunk_sizes": {
+    "XY": [256, 256],
+    "Z": 25,
+    "C": 1,
+    "T": 1
+  },
+  "access_pattern": "XY_slices",
+  "dimension_mapping": {
+    "X": 0,
+    "Y": 1,
+    "Z": 2,
+    "C": 3,
+    "T": 4
+  }
+}}
+
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2, 3, 4]}
+{"tile:sizes": [256, 256, 25, 1, 1]}
+{"tile:storage": "external"}
+{"tile:levels": 4}
+{"tile:level_scales": [1, 2, 4, 8]}
+{"tile:pattern": "s3://microscopy-data/sample123/level{l}/t{t}/c{c}/z{z}/y{y}_x{x}.raw"}
+{"tile:compression": "zstd"}
+```
+
+This configuration creates:
+- External tiling using S3 storage
+- Biologically-meaningful file organization (by timepoint, channel, z-slice)
+- Multi-resolution pyramid with 4 levels
+- Optimal tiles for microscopy visualization
+- Flexible access patterns for common microscopy workflows
+
+#### 5.2.3 Similarity to OME-ZARR
+
+The combined OME+tiling approach in JNRRD provides many of the same benefits as OME-ZARR:
+
+1. **Multi-resolution support** for efficient visualization of large datasets
+2. **Chunking by dimension** for optimal access patterns in microscopy
+3. **Cloud storage compatibility** with efficient random access
+4. **Organization by biological meaning** (channels, Z-stacks, timepoints)
+
+The key differences from OME-ZARR are:
+- JNRRD maintains a single metadata file rather than distributed JSON files
+- The extension mechanism allows mixing with other domain-specific extensions
+- More flexible chunking strategies beyond Zarr's regular grid structure
 
 ## 6. Examples
 

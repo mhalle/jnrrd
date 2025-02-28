@@ -665,6 +665,108 @@ def visualize_dataset(jnrrd_path):
             display_tile(get_cached_tile(appropriate_level, tile_index))
 ```
 
+### 9.4 Domain-Specific Tiling Examples
+
+#### 9.4.1 Microscopy Data with OME Extension
+
+The tiling extension can be combined with the OME extension to create biologically-aware tiling strategies. This example shows a multi-channel, Z-stack microscopy dataset with time series:
+
+```
+{"jnrrd": "0004"}
+{"type": "uint16"}
+{"dimension": 5}
+{"sizes": [2048, 2048, 100, 4, 20]}
+{"endian": "little"}
+{"encoding": "raw"}
+{"extensions": {"ome": "https://jnrrd.org/extensions/ome/v1.0.0", "tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+
+{"ome:dimensions": {
+  "order": "XYZCT",
+  "physical_sizes": {
+    "X": {"value": 0.1, "unit": "µm"},
+    "Y": {"value": 0.1, "unit": "µm"},
+    "Z": {"value": 0.5, "unit": "µm"},
+    "T": {"value": 5.0, "unit": "min"}
+  }
+}}
+
+{"ome:channels": [
+  {"id": "Channel:0", "name": "DAPI", "fluorophore": "DAPI", "color": "#0000FF"},
+  {"id": "Channel:1", "name": "GFP", "fluorophore": "eGFP", "color": "#00FF00"},
+  {"id": "Channel:2", "name": "RFP", "fluorophore": "mCherry", "color": "#FF0000"},
+  {"id": "Channel:3", "name": "Far-Red", "fluorophore": "Cy5", "color": "#FF00FF"}
+]}
+
+{"ome:tiling_strategy": {
+  "preferred_chunk_sizes": {
+    "XY": [256, 256],
+    "Z": 25,
+    "C": 1,
+    "T": 1
+  },
+  "access_pattern": "channel_first",
+  "dimension_mapping": {
+    "X": 0,
+    "Y": 1,
+    "Z": 2,
+    "C": 3,
+    "T": 4
+  }
+}}
+
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2, 3, 4]}
+{"tile:sizes": [256, 256, 25, 1, 1]}
+{"tile:storage": "external"}
+{"tile:pattern": "s3://microscopy-data/exp20230614/level{l}/t{t}/c{c}/z{z}/{y}_{x}.zstd"}
+{"tile:levels": 4}
+{"tile:level_scales": [1, 2, 4, 8]}
+{"tile:compression": "zstd"}
+
+[NO BINARY DATA - TILES STORED IN EXTERNAL FILES]
+```
+
+This configuration organizes the data in a biologically meaningful way:
+- Separate files by timepoint, channel, and Z-slice
+- Multi-resolution pyramid for efficient visualization
+- Each tile contains a 256×256 region of 25 Z-slices for one channel at one timepoint
+- Compression optimized for microscopy bit depths
+
+#### 9.4.2 OME-ZARR Compatibility Pattern
+
+This example shows how to structure JNRRD tiling to closely mirror the organization in OME-ZARR:
+
+```
+{"jnrrd": "0004"}
+{"type": "uint16"}
+{"dimension": 5}
+{"sizes": [2048, 2048, 50, 3, 10]}
+{"endian": "little"}
+{"encoding": "raw"}
+{"extensions": {"ome": "https://jnrrd.org/extensions/ome/v1.0.0", "tile": "https://jnrrd.org/extensions/tile/v1.0.0"}}
+
+{"ome:dimensions": {"order": "XYZCT"}}
+{"ome:channels": [
+  {"id": "Channel:0", "name": "DAPI", "color": "#0000FF"},
+  {"id": "Channel:1", "name": "GFP", "color": "#00FF00"},
+  {"id": "Channel:2", "name": "RFP", "color": "#FF0000"}
+]}
+
+{"tile:enabled": true}
+{"tile:dimensions": [0, 1, 2, 3, 4]}
+{"tile:sizes": [128, 128, 16, 1, 1]}
+{"tile:storage": "external"}
+{"tile:levels": 4}
+{"tile:level_scales": [1, 2, 4, 8]}
+{"tile:pattern": "zarr-layout/level{l}/.zarray"}
+{"tile:data_pattern": "zarr-layout/level{l}/{c}/{t}/{z}/{y}/{x}"}
+{"tile:zarr_compatible": true}
+
+[NO BINARY DATA - TILES STORED IN ZARR-COMPATIBLE LAYOUT]
+```
+
+The `tile:zarr_compatible` flag indicates that the external files follow the Zarr storage specification, allowing the same data to be accessed by both JNRRD and OME-ZARR readers.
+
 ## 10. Future Extensions
 
 Future versions of this extension may include:
