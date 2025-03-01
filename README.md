@@ -9,6 +9,7 @@ JNRRD aims to preserve the key concepts of NRRD (Nearly Raw Raster Data) while l
 ## Documentation
 
 - [JNRRD Specification](/spec/JNRRD-SPECIFICATION.md) - The formal specification document
+- [NRRD Extensions Specification](/spec/NRRD-EXTENSIONS-SPEC.md) - Backward-compatible extension mechanism for NRRD files
 - [NRRD Format](/docs/NRRD-SPEC.txt) - Reference documentation for the original NRRD format
 - [JNRRD Concept](/docs/JNRRD-CONCEPT.md) - Original concept document for JNRRD
 
